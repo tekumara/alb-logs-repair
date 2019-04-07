@@ -53,7 +53,12 @@ you'll know that objects aren't laid out in a partition friendly way, eg: with p
 
 This script will use `MSCK REPAIR TABLE` to identify missing partitions, and then individually add each one.
 
+## Pre-requisites
+
+You have a partitioned table called `alb_logs` defined as above.  
+You have the aws cli installed.
+
 ## Usage
 
-Run `alb-logs.repair.sh` to see usage instructions.
+Run `alb-logs.repair.sh` to see usage instructions. 
 
