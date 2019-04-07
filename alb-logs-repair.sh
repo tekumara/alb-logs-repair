@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 function die() {
-    >&2 echo -e "$*"
+    >&2 echo -e "$@"
     exit 1
 }
 
@@ -16,14 +16,14 @@ function usage() {
     "
 }
 
-set -oe pipefail
+set -oE pipefail
 trap 'die "Unhandled error on or near line ${LINENO}"' ERR
 
 alb_logs="$1"
 output_location="$2"
 query_string="MSCK REPAIR TABLE alb_logs;"
 
-[ -z "$alb_logs" ] || [ -z "$output_location" ] && usage
+[[ -z "$alb_logs" ]] || [[ -z "$output_location" ]] && usage
 
 echo "$query_string"
 query_id=$(aws athena start-query-execution \
@@ -51,10 +51,10 @@ query_id=$(aws athena start-query-execution \
 }
 
 # fetch, parse, generate and execute add partition statements for partitions not in the metastore
-aws s3 cp $(jq -rn "$query_execution | .QueryExecution.ResultConfiguration.OutputLocation") - \
+aws s3 cp "$(jq -rn "$query_execution | .QueryExecution.ResultConfiguration.OutputLocation")" - \
 	| sed $'s/\t/\\\n/g' \
 	| perl -ne 'if (/alb_logs:(\d{4})\/(\d\d)\/(\d\d)/) { print "ALTER TABLE alb_logs ADD PARTITION (year=\"$1\", month=\"$2\", day=\"$3\") LOCATION \"'"$alb_logs"'/$1/$2/$3/\";\n";}' \
-	| while read sql; do
+	| while read -r sql; do
 		echo "$sql"	
 	    aws athena start-query-execution \
 		    --query-string "$sql" \
